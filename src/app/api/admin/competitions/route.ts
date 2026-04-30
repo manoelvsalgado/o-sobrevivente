@@ -1,6 +1,25 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export async function GET() {
+  try {
+    const competitions = await prisma.competition.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        teams: true,
+      },
+    });
+
+    return NextResponse.json({ competitions });
+  } catch (error) {
+    console.error("Error fetching competitions", error);
+    return NextResponse.json(
+      { error: "Não foi possível listar as competições." },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
