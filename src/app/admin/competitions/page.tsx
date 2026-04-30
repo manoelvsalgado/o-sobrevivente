@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
 
 const initialTeams = ["Time A", "Time B", "Time C", "Time D"];
@@ -11,6 +11,46 @@ export default function CreateCompetitionPage() {
   const [rounds, setRounds] = useState(8);
   const [maxPlayers, setMaxPlayers] = useState(20);
   const [teams, setTeams] = useState(initialTeams);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatusMessage(null);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/admin/competitions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          initialLives: lives,
+          maxRounds: rounds,
+          maxPlayers,
+          teams,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setStatusMessage(data.error || "Erro ao criar competição.");
+      } else {
+        setStatusMessage(`Competição "${data.competition.name}" criada com sucesso!`);
+        setName("");
+        setLives(7);
+        setRounds(8);
+        setMaxPlayers(20);
+        setTeams(initialTeams);
+      }
+    } catch (error) {
+      setStatusMessage("Falha ao conectar ao servidor.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-slate-100 sm:px-10">
@@ -28,7 +68,7 @@ export default function CreateCompetitionPage() {
           </Link>
         </div>
 
-        <form className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
           <section className="rounded-3xl border border-white/10 bg-slate-950/80 p-6 ring-1 ring-white/5">
             <h2 className="text-xl font-semibold text-white">Dados da competição</h2>
             <div className="mt-6 grid gap-6 sm:grid-cols-2">
@@ -114,16 +154,21 @@ export default function CreateCompetitionPage() {
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm leading-6 text-slate-400">
-              Os campos acima definem a configuração inicial da competição. A integração com o backend será adicionada em seguida.
+              Os campos acima definem a configuração inicial da competição.
             </p>
             <button
-              type="button"
-              onClick={() => alert(`Competição ${name || "sem nome"} criada com ${lives} vidas e ${rounds} rodadas.`)}
-              className="inline-flex items-center justify-center rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex items-center justify-center rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-500/60"
             >
-              Criar competição
+              {isSubmitting ? "Criando..." : "Criar competição"}
             </button>
           </div>
+          {statusMessage ? (
+            <div className="rounded-3xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+              {statusMessage}
+            </div>
+          ) : null}
         </form>
       </div>
     </main>

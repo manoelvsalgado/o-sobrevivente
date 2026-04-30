@@ -1,23 +1,67 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const sampleTeams = [
-  { id: "1", name: "Flamengo" },
-  { id: "2", name: "Palmeiras" },
-  { id: "3", name: "Fluminense" },
-  { id: "4", name: "Corinthians" },
-];
+type Team = { id: string; name: string };
+
+type PlayerCompetitionResponse = {
+  competition: {
+    id: string;
+    name: string;
+    initialLives: number;
+    maxRounds: number;
+    teams: Team[];
+  } | null;
+  currentRound: {
+    number: number;
+    deadline: string;
+  } | null;
+};
 
 export default function PlayerCompetitionsPage() {
-  const [selectedTeam, setSelectedTeam] = useState(sampleTeams[0].id);
-  const [deadline] = useState("2026-05-01 18:00");
-  const [roundNumber] = useState(3);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<string>("");
+  const [deadline, setDeadline] = useState("Carregando...");
+  const [roundNumber, setRoundNumber] = useState<number | null>(null);
+  const [competitionName, setCompetitionName] = useState("Competição");
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadCompetition() {
+      try {
+        const response = await fetch("/api/player/competitions");
+        const data: PlayerCompetitionResponse = await response.json();
+        if (data?.competition) {
+          setCompetitionName(data.competition.name);
+          setTeams(data.competition.teams);
+          setRoundNumber(data.currentRound?.number ?? null);
+          setDeadline(
+            data.currentRound?.deadline
+              ? new Date(data.currentRound.deadline).toLocaleString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Sem deadline"
+          );
+          setSelectedTeam(data.competition.teams[0]?.id ?? "");
+        } else {
+          setStatusMessage("Nenhuma competição ativa encontrada.");
+        }
+      } catch (error) {
+        setStatusMessage("Erro ao carregar a competição.");
+      }
+    }
+
+    loadCompetition();
+  }, []);
 
   const selectedTeamLabel = useMemo(
-    () => sampleTeams.find((team) => team.id === selectedTeam)?.name ?? "",
-    [selectedTeam]
+    () => teams.find((team) => team.id === selectedTeam)?.name ?? "",
+    [selectedTeam, teams]
   );
 
   return (
@@ -80,12 +124,43 @@ export default function PlayerCompetitionsPage() {
             </div>
             <button
               type="button"
-              onClick={() => alert(`Palpite registrado para ${selectedTeamLabel}`)}
+              onClick={async () => {
+                if (!selectedTeam) {
+                  setStatusMessage("Escolha um time antes de confirmar.");
+                  return;
+                }
+
+                try {
+                  const response = await fetch("/api/player/choices", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      userId: "user-demo",
+                      roundId: "round-demo",
+                      teamId: selectedTeam,
+                      isOmission: false,
+                    }),
+                  });
+                  const data = await response.json();
+                  if (!response.ok) {
+                    setStatusMessage(data.error || "Erro ao registrar palpite.");
+                  } else {
+                    setStatusMessage(`Palpite registrado: ${selectedTeamLabel}`);
+                  }
+                } catch (error) {
+                  setStatusMessage("Falha ao conectar ao servidor.");
+                }
+              }}
               className="inline-flex items-center justify-center rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
             >
               Confirmar palpite
             </button>
           </div>
+          {statusMessage ? (
+            <div className="mt-4 rounded-3xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+              {statusMessage}
+            </div>
+          ) : null}
         </section>
       </div>
     </main>
