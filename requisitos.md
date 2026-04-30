@@ -4,7 +4,7 @@
 
 ### Criar competição
 **Como administrador**
-quero criar uma competição informando nome, quantidade de vidas, número de rodadas, times participantes e limite de jogadores
+quero criar uma competição informando nome, quantidade de vidas (configurável), número de rodadas, times participantes e limite de jogadores
 para iniciar um novo torneio.
 
 ### Definir múltiplos administradores
@@ -61,12 +61,12 @@ quero visualizar apenas times disponíveis
 para evitar escolhas inválidas.
 
 Critérios de bloqueio:
-- times já utilizados
+- times já utilizados (não repetir até esgotar todos disponíveis)
 - times eliminados
 
-### Repetição excepcional
+### Repetição obrigatória
 **Como jogador**
-quero reutilizar times quando acabar minhas opções
+quero ser obrigado a repetir times após esgotar todas as opções disponíveis
 para continuar jogando nas rodadas finais.
 
 ---
@@ -75,22 +75,27 @@ para continuar jogando nas rodadas finais.
 
 ### Perder vida por empate
 **Como sistema**
-quero remover uma vida quando o time empatar
+quero remover uma vida quando o time empatar (considerando apenas tempo regulamentar, exceto na final)
 para aplicar as regras.
 
 ### Perder vida por derrota
 **Como sistema**
-quero remover uma vida quando o time perder
+quero remover uma vida quando o time perder (considerando apenas tempo regulamentar, exceto na final)
 para aplicar as regras.
 
-### Aplicar danilada
+### Aplicar penalidade por ausência
 **Como sistema**
-quero remover uma vida automaticamente quando o jogador não escolher
+quero remover uma vida quando o jogador não escolher um time válido
 para aplicar a penalidade.
+
+### Aplicar omissão com ônus
+**Como sistema**
+quero permitir que o jogador escolha um time válido para "gastar" sem afetar estatísticas, com prazo até o início da próxima rodada
+para evitar eliminação imediata por não escolher.
 
 ### Aplicar penalidade por repetição
 **Como sistema**
-quero remover uma vida em repetições forçadas
+quero remover vidas cumulativas em repetições (1ª volta: -1, 2ª: -2, 3ª: -3)
 para aplicar as regras.
 
 ### Eliminar jogador
@@ -113,13 +118,14 @@ quero ordenar jogadores pelos critérios oficiais
 para definir corretamente o campeão.
 
 Ordem:
-1. vidas
-2. empate
-3. derrota
-4. repetição
-5. danilada
-6. saldo de gols
-7. gols pró
+1. Menos rodadas sem palpite
+2. Menos times repetidos
+3. Menos derrotas
+4. Vitórias fora
+5. Saldo de gols
+6. Gols marcados
+7. Saldo fora
+8. Gols fora
 
 ---
 
@@ -134,6 +140,11 @@ para encerrar a competição.
 **Como sistema**
 quero usar critérios de desempate caso todos morram antes da final
 para sempre existir um campeão.
+
+### Regra especial da final
+**Como jogador**
+quero poder alterar meu palpite na final se não tiver chance matemática após ver os palpites dos demais
+para participar ativamente.
 
 ---
 
