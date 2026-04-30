@@ -40,6 +40,14 @@ export default function AdminPage() {
               <p className="mt-3 text-sm leading-6">Gerar códigos ou links para entrada de jogadores.</p>
             </article>
           </div>
+          <div className="mt-8">
+            <Link
+              href="/admin/competitions"
+              className="inline-flex rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
+            >
+              Criar nova competição
+            </Link>
+          </div>
         </div>
       </div>
     </main>
