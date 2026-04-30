@@ -40,6 +40,14 @@ export default function PlayerPage() {
               <p className="mt-3 text-sm leading-6">Acompanhar vidas, penalidades e posição na tabela.</p>
             </article>
           </div>
+          <div className="mt-8">
+            <Link
+              href="/player/competitions"
+              className="inline-flex rounded-3xl bg-sky-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+            >
+              Ir para competição ativa
+            </Link>
+          </div>
         </div>
       </div>
     </main>
