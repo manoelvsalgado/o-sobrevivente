@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  passwordHash String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  competitions CompetitionMember[]
+  choices      PlayerChoice[]
+  penalties    Penalty[]
+}
+
+model Competition {
+  id          String   @id @default(cuid())
+  name        String
+  initialLives Int     @default(7)
+  maxRounds   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     CompetitionMember[]
+  invites     CompetitionInvite[]
+  rounds      Round[]
+  teams       Team[]
+  results     MatchResult[]
+}
+
+model CompetitionMember {
+  id            String      @id @default(cuid())
+  userId        String
+  competitionId String
+  role          Role        @default(PLAYER)
+  lives         Int         @default(7)
+  joinedAt      DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, competitionId])
+}
+
+enum Role {
+  ADMIN
+  PLAYER
+}
+
+model CompetitionInvite {
+  id            String      @id @default(cuid())
+  competitionId String
+  code          String      @unique
+  expiresAt     DateTime?
+  createdAt     DateTime    @default(now())
+
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+}
+
+model Round {
+  id            String      @id @default(cuid())
+  competitionId String
+  number        Int
+  deadline      DateTime
+  status        RoundStatus @default(OPEN)
+  createdAt     DateTime    @default(now())
+
+  competition   Competition  @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  choices       PlayerChoice[]
+  results       MatchResult[]
+
+  @@unique([competitionId, number])
+}
+
+enum RoundStatus {
+  OPEN
+  CLOSED
+  FINISHED
+}
+
+model Team {
+  id            String      @id @default(cuid())
+  competitionId String
+  name          String
+  eliminatedInRound Int?
+  createdAt     DateTime    @default(now())
+
+  competition   Competition  @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  choices       PlayerChoice[]
+  results       MatchResult[]
+
+  @@unique([competitionId, name])
+}
+
+model PlayerChoice {
+  id            String      @id @default(cuid())
+  userId        String
+  roundId       String
+  teamId        String
+  isOmission    Boolean     @default(false) // for "omissão com ônus"
+  createdAt     DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  round         Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  team          Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roundId])
+}
+
+model MatchResult {
+  id            String      @id @default(cuid())
+  roundId       String
+  teamId        String
+  opponent      String?     // name of opponent team
+  goalsFor      Int
+  goalsAgainst  Int
+  isRegularTime Boolean     @default(true) // false for final extra time
+  createdAt     DateTime    @default(now())
+
+  round         Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  team          Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model Penalty {
+  id            String      @id @default(cuid())
+  userId        String
+  roundId       String?
+  type          PenaltyType
+  livesLost     Int
+  createdAt     DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  round         Round?      @relation(fields: [roundId], references: [id], onDelete: Cascade)
+}
+
+enum PenaltyType {
+  DRAW
+  LOSS
+  ABSENCE
+  REPETITION
+  OMISSION
+}
